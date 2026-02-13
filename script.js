@@ -169,11 +169,24 @@ if (isMobile) {
     customVideo.style.height = '100%';
     customVideo.style.objectFit = 'cover';
     let pausedNearEnd = false;
+    let allowSystemPause = false;
+
+    customVideo.addEventListener('pause', () => {
+      if (allowSystemPause || customVideo.ended) return;
+      const resumeAttempt = customVideo.play();
+      if (resumeAttempt && typeof resumeAttempt.catch === 'function') {
+        resumeAttempt.catch(() => {
+          // Ignore autoplay resume errors.
+        });
+      }
+    });
+
     customVideo.addEventListener('timeupdate', () => {
       if (pausedNearEnd) return;
       if (!Number.isFinite(customVideo.duration) || customVideo.duration <= 0) return;
       if (customVideo.currentTime >= customVideo.duration - CUSTOM_VIDEO_PAUSE_BEFORE_END_SEC) {
         pausedNearEnd = true;
+        allowSystemPause = true;
         customVideo.pause();
         spawnCursorYesButton();
       }
